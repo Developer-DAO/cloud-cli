@@ -103,19 +103,28 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .send()
         .await?
         .error_for_status()?
-        .json::<Vec<Keys>>()
+        .json::<Vec<Key>>()
         .await?;
     let _ = term.clear_screen();
     term.flush()?;
     let mut clipboard = Clipboard::new()?;
     if api_keys.is_empty() {
-        let new_key = client
-            .post("https://api.cloud.developerdao.com/api/keys")
-            .send()
-            .await?
-            .error_for_status()?
-            .text()
-            .await?;
+        let new_key = Key {
+            apikey: client
+                .post("https://api.cloud.developerdao.com/api/keys")
+                .send()
+                .await?
+                .error_for_status()?
+                .text()
+                .await?,
+        };
+
+        let redacted_key = new_key.as_redacted();
+        let redacted_ep = format!(
+            "https://api.cloud.developerdao.com/rpc/{}/{}",
+            CHAINS[chain].id(),
+            redacted_key
+        );
 
         let endpoint = format!(
             "https://api.cloud.developerdao.com/rpc/{}/{}",
@@ -125,23 +134,35 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         clipboard.set_text(&endpoint)?;
         println!("\nYour RPC Endpoint for {}:\n", CHAINS[chain]);
-        println!("\n{endpoint}\n");
+        println!("\n{redacted_ep}\n");
         println!("\nYour API key is now copied to your clipboard");
     } else {
-        let index = dialoguer::Select::new()
-            .items(&api_keys)
+        let redacted_keys = api_keys
+            .iter()
+            .map(|e| e.as_redacted())
+            .collect::<Vec<RedactedKey>>();
+
+        let index = dialoguer::Select::with_theme(&ColorfulTheme::default())
+            .items(&redacted_keys)
             .with_prompt("Select an API key to copy")
             .interact()?;
+
+        let redacted_ep = format!(
+            "https://api.cloud.developerdao.com/rpc/{}/{}",
+            CHAINS[chain].id(),
+            redacted_keys[index].redacted,
+        );
 
         let endpoint = format!(
             "https://api.cloud.developerdao.com/rpc/{}/{}",
             CHAINS[chain].id(),
             api_keys[index].apikey
         );
+
         clipboard.set_text(&endpoint)?;
 
         println!("\nYour RPC Endpoint for {}:\n", CHAINS[chain]);
-        println!("\n{endpoint}\n",);
+        println!("\n{redacted_ep}\n",);
         println!("\nYour endpoint is now copied to your clipboard");
     }
 
@@ -155,11 +176,30 @@ pub struct LoginRequest {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Keys {
+pub struct Key {
     apikey: String,
 }
 
-impl Display for Keys {
+impl Key {
+    pub fn as_redacted(&self) -> RedactedKey {
+        let last_five = &self.apikey[self.apikey.len() - 5..];
+        let first_five = &self.apikey[..5];
+        let redacted = format!("{first_five}*****************{last_five}");
+        RedactedKey { redacted }
+    }
+}
+
+pub struct RedactedKey {
+    redacted: String,
+}
+
+impl Display for RedactedKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.redacted)
+    }
+}
+
+impl Display for Key {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.apikey)
     }
