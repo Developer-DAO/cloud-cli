@@ -60,7 +60,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_prompt("Password")
         .interact()?;
 
-    let _ = term.clear_screen();
+    term.clear_screen()?;
 
     let login = LoginRequest { email, password };
 

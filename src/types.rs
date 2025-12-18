@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
-pub static CHAINS: &'static [Chains] = &[
+pub static CHAINS: &[Chains] = &[
     Chains::Ethereum,
     Chains::Base,
     Chains::Arbitrum,

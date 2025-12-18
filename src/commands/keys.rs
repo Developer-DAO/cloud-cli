@@ -14,7 +14,7 @@ pub async fn get_keys_interactive(
 
     let chain = FuzzySelect::with_theme(&ColorfulTheme::default())
         .with_prompt("Which chain would you like to use?")
-        .items(&CHAINS)
+        .items(CHAINS)
         .interact()?;
 
     let api_keys: Vec<Key> = client
