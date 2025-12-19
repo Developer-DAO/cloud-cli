@@ -24,8 +24,6 @@ pub enum Command {
     GetApiKey {
         #[arg(short, long)]
         unsafe_print: bool,
-        #[arg(short, long)]
-        no_url: bool,
     },
     DeleteApiKey,
     NewApiKey,
@@ -66,7 +64,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .map_err(|_| "Invalid username or password")?;
 
     match cli_input.cmd {
-        Command::GetApiKey { unsafe_print, .. } => {
+        Command::GetApiKey { unsafe_print } => {
             get_keys_interactive(&client, &mut term, unsafe_print).await?
         }
         Command::DeleteApiKey => delete_api_key(&client).await?,
