@@ -1,6 +1,6 @@
 use arboard::Clipboard;
 use console::Term;
-use dialoguer::{FuzzySelect, theme::ColorfulTheme};
+use dialoguer::{Confirm, FuzzySelect, theme::ColorfulTheme};
 use reqwest::Client;
 
 use crate::types::{CHAINS, Key, RedactedKey};
@@ -103,6 +103,77 @@ pub async fn get_keys_interactive(
             }
         }
     }
+
+    Ok(())
+}
+
+pub async fn new_api_key(client: &Client) -> Result<(), Box<dyn std::error::Error>> {
+    let mut clipboard = Clipboard::new()?;
+    let new_key = Key {
+        apikey: client
+            .post("https://api.cloud.developerdao.com/api/keys")
+            .send()
+            .await?
+            .error_for_status()?
+            .text()
+            .await?,
+    };
+
+    let redacted_key = new_key.as_redacted();
+    clipboard.set_text(new_key.apikey)?;
+
+    println!("Your new API key:\n{redacted_key}\nSuccessfully created and copied to clipboard!");
+    Ok(())
+}
+
+pub async fn delete_api_key(client: &Client) -> Result<(), Box<dyn std::error::Error>> {
+    let api_keys: Vec<Key> = client
+        .get("https://api.cloud.developerdao.com/api/keys")
+        .send()
+        .await?
+        .error_for_status()?
+        .json::<Vec<Key>>()
+        .await?;
+
+    if api_keys.is_empty() {
+        Err("Err: deletion failed. No API keys found.")?
+    }
+
+    let redacted_keys = api_keys
+        .iter()
+        .map(|e| e.as_redacted())
+        .collect::<Vec<RedactedKey>>();
+
+    let index = dialoguer::Select::with_theme(&ColorfulTheme::default())
+        .items(&redacted_keys)
+        .with_prompt("Select an API key to delete")
+        .interact()?;
+
+    let confirmation = Confirm::new()
+        .with_prompt(format!(
+            "Are you want you want to delete {}?",
+            redacted_keys[index].redacted
+        ))
+        .interact()
+        .unwrap();
+
+    if !confirmation {
+        Err("API key deletion aborted")?
+    }
+
+    client
+        .delete(format!(
+            "https://api.cloud.developerdao.com/api/keys/{}",
+            api_keys[index].apikey
+        ))
+        .send()
+        .await?
+        .error_for_status()?;
+
+    println!(
+        "Successfully deleted api key: {}",
+        redacted_keys[index].redacted
+    );
 
     Ok(())
 }

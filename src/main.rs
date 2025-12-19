@@ -1,5 +1,11 @@
-use crate::types::LoginRequest;
-use clap::{Parser, Subcommand, ValueEnum};
+use crate::{
+    commands::{
+        account_info::{get_balance, get_rpc_calls},
+        keys::{delete_api_key, new_api_key},
+    },
+    types::{ASCII_ART, LoginRequest},
+};
+use clap::{Parser, Subcommand};
 use commands::keys::get_keys_interactive;
 use console::Term;
 use dialoguer::{Input, Password, theme::ColorfulTheme};
@@ -18,29 +24,13 @@ pub enum Command {
     GetApiKey {
         #[arg(short, long)]
         unsafe_print: bool,
-    },
-    DeleteApiKey {
         #[arg(short, long)]
-        key: String,
+        no_url: bool,
     },
+    DeleteApiKey,
     NewApiKey,
-    TrackUsage {
-        #[arg(short)]
-        service: Service,
-    },
+    TrackUsage,
     Balance,
-    GetPaymentInfo,
-    SubmitPayment {
-        #[arg(short, long)]
-        hash: String,
-        #[arg(short, long)]
-        plan: Option<String>,
-    },
-}
-
-#[derive(Debug, Copy, Clone, ValueEnum)]
-pub enum Service {
-    Rpc,
 }
 
 #[tokio::main]
@@ -49,7 +39,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut term = Term::stdout();
     term.clear_screen()?;
     term.set_title("Developer DAO Cloud");
-    term.write_line("Login to Developer DAO Cloud")?;
+    term.write_line(ASCII_ART)?;
+    term.write_line("Login")?;
     term.write_line("")?;
 
     let email: String = Input::with_theme(&ColorfulTheme::default())
@@ -71,18 +62,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .json(&login)
         .send()
         .await?
-        .error_for_status()?;
+        .error_for_status()
+        .map_err(|_| "Invalid username or password")?;
 
     match cli_input.cmd {
-        Command::GetApiKey { unsafe_print } => {
+        Command::GetApiKey { unsafe_print, .. } => {
             get_keys_interactive(&client, &mut term, unsafe_print).await?
         }
-        Command::DeleteApiKey { key: _ } => todo!(),
-        Command::NewApiKey => todo!(),
-        Command::TrackUsage { service: _ } => todo!(),
-        Command::Balance => todo!(),
-        Command::GetPaymentInfo => todo!(),
-        Command::SubmitPayment { hash: _, plan: _ } => todo!(),
+        Command::DeleteApiKey => delete_api_key(&client).await?,
+        Command::NewApiKey => new_api_key(&client).await?,
+        Command::TrackUsage => get_rpc_calls(&client).await?,
+        Command::Balance => get_balance(&client).await?,
     };
 
     Ok(())
