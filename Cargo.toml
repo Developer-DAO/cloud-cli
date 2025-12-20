@@ -3,6 +3,7 @@ name = "dd-cloud"
 authors = ["Zachary Kornberg <zach@futexlabs.io>"]
 version = "0.1.0"
 description = "The official CLI tool of Developer DAO Cloud."
+repository = "https://github.com/Developer-DAO/cloud-cli"
 edition = "2024"
 
 [dependencies]
@@ -16,3 +17,8 @@ serde_json = "1.0.140"
 tokio = {version = "1.44.1", features = ["rt-multi-thread", "macros"]}
 aws-config = { version = "1.1.7", features = ["behavior-version-latest", "credentials-login"] }
 aws-sdk-secretsmanager = "1.97.0"
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"
