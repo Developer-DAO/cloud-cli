@@ -15,6 +15,7 @@ RUN cargo build --release --bin dd-cloud
 
 # We do not need the Rust toolchain to run the binary!
 FROM debian:trixie-slim AS runtime
+RUN apt-get update && apt-get install -y ca-certificates
 WORKDIR /dd-cloud
 COPY --from=builder /app/target/release/dd-cloud /usr/local/bin
 ENTRYPOINT ["/usr/local/bin/dd-cloud"]
