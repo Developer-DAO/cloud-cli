@@ -1,6 +1,8 @@
 [package]
-name = "cloud-cli"
+name = "dd-cloud"
+authors = ["Zachary Kornberg <zach@futexlabs.io>"]
 version = "0.1.0"
+description = "The official CLI tool of Developer DAO Cloud."
 edition = "2024"
 
 [dependencies]

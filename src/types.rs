@@ -13,6 +13,8 @@ pub const ASCII_ART: &'static str = {
     "#
 };
 
+pub const ABOUT: &str = "Welcome to the D_D Cloud CLI tool. Conveniently manage API keys, track service usage, and view account balances all from your terminal.";
+
 pub static CHAINS: &[Chains] = &[
     Chains::Ethereum,
     Chains::Base,

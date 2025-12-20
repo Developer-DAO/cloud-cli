@@ -3,7 +3,7 @@ use crate::{
         account_info::{get_balance, get_rpc_calls},
         keys::{delete_api_key, new_api_key},
     },
-    types::{ASCII_ART, LoginRequest},
+    types::{ABOUT, ASCII_ART, LoginRequest},
 };
 use clap::{Parser, Subcommand};
 use commands::keys::get_keys_interactive;
@@ -12,8 +12,8 @@ use dialoguer::{Input, Password, theme::ColorfulTheme};
 
 pub mod commands;
 pub mod types;
-
 #[derive(Parser)]
+#[command(version, about = ABOUT, long_about = None, name = "dd-cloud", author)]
 pub struct CloudCli {
     #[command(subcommand)]
     cmd: Command,
@@ -21,13 +21,20 @@ pub struct CloudCli {
 
 #[derive(Subcommand)]
 pub enum Command {
+    /// Retrieve one of your API key for D_D Cloud.
     GetApiKey {
-        #[arg(short, long)]
+        /// Flag to print the full URL including your API key to the terminal. 
+        /// Unsafe to use because your API key is written to stdout.
+        #[arg(long)]
         unsafe_print: bool,
     },
+    /// Delete one of your API keys for D_D Cloud.
     DeleteApiKey,
+    /// Generate a new API key for D_D Cloud. Max 10.
     NewApiKey,
+    /// Returns the number of calls you made this cycle.
     TrackUsage,
+    /// Returns your account balance.
     Balance,
 }
 
@@ -50,6 +57,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .interact()?;
 
     term.clear_screen()?;
+    term.write_line(ASCII_ART)?;
+    term.write_line("")?;
 
     let login = LoginRequest { email, password };
 
