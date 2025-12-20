@@ -34,4 +34,4 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ghcr.io/developer-dao/rpc:${{ github.sha }}
+          tags: ghcr.io/developer-dao/cloud-cli:${{ github.sha }}
