@@ -18,4 +18,4 @@ Get API Key has an optional flag called `--unsafe-print` that permits the user t
 For more info, try `dd-cloud get-api-key --help`
 
 New API Key has an optional argument invoked by `--secret-manager` or `-s` that allows users to store their newly generated API key directly in a secret storage service such as AWS Secret Manager. More services will be supported in the future. 
-The only current option for `--secret-manager` or `-s` is `--aws`. For more info, try `dd-cloud new-api-key --help`.
+The only current option for `--secret-manager` or `-s` is `--aws`. For more info, try `dd-cloud new-api-key --help`. 
