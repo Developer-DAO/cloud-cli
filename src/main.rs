@@ -5,7 +5,7 @@ use crate::{
     },
     types::{ABOUT, ASCII_ART, LoginRequest},
 };
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
 use commands::keys::get_keys_interactive;
 use console::Term;
 use dialoguer::{Input, Password, theme::ColorfulTheme};
@@ -31,11 +31,21 @@ pub enum Command {
     /// Delete one of your API keys for D_D Cloud.
     DeleteApiKey,
     /// Generate a new API key for D_D Cloud. Max 10.
-    NewApiKey,
+    NewApiKey {
+        /// Store your API key in a secret manager. Currently supports AWS.
+        #[arg(short, long)]
+        secret_manager: Option<SecretManager>,
+    },
     /// Returns the number of calls you made this cycle.
     TrackUsage,
     /// Returns your account balance.
     Balance,
+}
+
+#[derive(Debug, ValueEnum, Clone)]
+pub enum SecretManager {
+    /// Ensure to login to AWS first via CLI with `aws login`
+    Aws
 }
 
 #[tokio::main]
@@ -77,7 +87,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             get_keys_interactive(&client, &mut term, unsafe_print).await?
         }
         Command::DeleteApiKey => delete_api_key(&client).await?,
-        Command::NewApiKey => new_api_key(&client).await?,
+        Command::NewApiKey { secret_manager }=> new_api_key(&client, secret_manager).await?,
         Command::TrackUsage => get_rpc_calls(&client).await?,
         Command::Balance => get_balance(&client).await?,
     };

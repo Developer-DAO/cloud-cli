@@ -1,9 +1,13 @@
 use arboard::Clipboard;
+use aws_sdk_secretsmanager::operation::create_secret::CreateSecretOutput;
 use console::Term;
 use dialoguer::{Confirm, FuzzySelect, theme::ColorfulTheme};
 use reqwest::Client;
 
-use crate::types::{CHAINS, Key, RedactedKey};
+use crate::{
+    SecretManager,
+    types::{CHAINS, Key, RedactedKey},
+};
 
 pub async fn get_keys_interactive(
     client: &Client,
@@ -107,7 +111,10 @@ pub async fn get_keys_interactive(
     Ok(())
 }
 
-pub async fn new_api_key(client: &Client) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn new_api_key(
+    client: &Client,
+    secret_manager: Option<SecretManager>,
+) -> Result<(), Box<dyn std::error::Error>> {
     let mut clipboard = Clipboard::new()?;
     let new_key = Key {
         apikey: client
@@ -120,9 +127,24 @@ pub async fn new_api_key(client: &Client) -> Result<(), Box<dyn std::error::Erro
     };
 
     let redacted_key = new_key.as_redacted();
-    clipboard.set_text(new_key.apikey)?;
 
-    println!("Your new API key:\n{redacted_key}\nSuccessfully created and copied to clipboard!");
+    match secret_manager {
+        Some(SecretManager::Aws) => {
+            let secret_info = store_in_aws_secret_manager(new_key).await?;
+            println!(
+                "Successfully created your new API key:\n{redacted_key}\n Successfully added to AWS Secret Manager!\nName: {}\nARN: {}",
+                secret_info.name().unwrap_or_else(|| "None"),
+                secret_info.arn().unwrap_or_else(|| "None")
+            );
+        }
+        None => {
+            clipboard.set_text(new_key.apikey)?;
+            println!(
+                "Your new API key:\n{redacted_key}\nSuccessfully created and copied to clipboard!"
+            );
+        }
+    }
+
     Ok(())
 }
 
@@ -176,4 +198,18 @@ pub async fn delete_api_key(client: &Client) -> Result<(), Box<dyn std::error::E
     );
 
     Ok(())
+}
+
+pub async fn store_in_aws_secret_manager(
+    api_key: Key,
+) -> Result<CreateSecretOutput, Box<dyn std::error::Error>> {
+    let config = aws_config::load_from_env().await;
+    let client = aws_sdk_secretsmanager::Client::new(&config);
+    Ok(client
+        .create_secret()
+        .set_name(Some(format!("D_D-Cloud-API-Key-{}", &api_key.apikey[..5])))
+        .set_secret_string(Some(api_key.apikey))
+        .set_description(Some("An api key for D_D Cloud made via CLI".to_string()))
+        .send()
+        .await?)
 }
