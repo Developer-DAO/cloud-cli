@@ -1,7 +1,15 @@
 name: Build and Distributed D_D Cloud CLI
 
 on:
-  branches: [main]
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+   
+env:
+    CARGO_TERM_COLOR: always
 
 jobs:
   docker-build-deploy:
