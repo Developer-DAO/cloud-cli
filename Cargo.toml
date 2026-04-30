@@ -21,6 +21,9 @@ url = "2.5.8"
 cookie_store = {version = "0.22.1", features = ["serde_json"]}
 bytes = "1.11.1"
 
+[patch.crates-io]
+rustls-webpki = { git = "https://github.com/rustls/webpki", tag = "v/0.103.13" }
+
 [profile.dist]
 inherits = "release"
 lto = "thin"
