@@ -133,8 +133,8 @@ pub async fn new_api_key(
             let secret_info = store_in_aws_secret_manager(new_key).await?;
             println!(
                 "Successfully created your new API key:\n{redacted_key}\n Successfully added to AWS Secret Manager!\nName: {}\nARN: {}",
-                secret_info.name().unwrap_or_else(|| "None"),
-                secret_info.arn().unwrap_or_else(|| "None")
+                secret_info.name().unwrap_or("None"),
+                secret_info.arn().unwrap_or("None")
             );
         }
         None => {

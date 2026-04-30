@@ -1,8 +1,10 @@
-use std::fmt::Display;
-
+use bytes::Bytes;
+use cookie_store::{CookieStore, RawCookie};
+use reqwest::{cookie::CookieStore as Store, header::HeaderValue};
 use serde::{Deserialize, Serialize};
+use std::{fmt::Display, sync::Mutex};
 
-pub const ASCII_ART: &'static str = {
+pub const ASCII_ART: &str = {
     r#"
 ██████╗         ██████╗      ██████╗██╗      ██████╗ ██╗   ██╗██████╗ 
 ██╔══██╗        ██╔══██╗    ██╔════╝██║     ██╔═══██╗██║   ██║██╔══██╗
@@ -101,5 +103,43 @@ impl Display for RedactedKey {
 impl Display for Key {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.apikey)
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Default)]
+pub struct Cookies(pub Mutex<CookieStore>);
+
+impl Store for Cookies {
+    fn set_cookies(
+        &self,
+        cookie_headers: &mut dyn Iterator<Item = &reqwest::header::HeaderValue>,
+        url: &url::Url,
+    ) {
+        let cookies = cookie_headers
+            .filter_map(|f| f.to_str().ok())
+            .map(String::from)
+            .filter_map(|f| RawCookie::parse(f).ok());
+
+        self.0.lock().unwrap().store_response_cookies(cookies, url);
+    }
+
+    fn cookies(&self, url: &url::Url) -> Option<reqwest::header::HeaderValue> {
+        let s = self
+            .0
+            .lock()
+            .unwrap()
+            .get_request_values(url)
+            .map(|(name, value)| format!("{}={}", name, value))
+            .fold(String::new(), |mut acc, e| {
+                acc.push_str(&e);
+                acc.push_str("; ");
+                acc
+            });
+
+        if s.is_empty() {
+            return None;
+        }
+
+        HeaderValue::from_maybe_shared(Bytes::from(s)).ok()
     }
 }

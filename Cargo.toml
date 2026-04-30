@@ -1,7 +1,7 @@
 [package]
 name = "dd-cloud"
 authors = ["Zachary Kornberg <zach@futexlabs.io>"]
-version = "0.1.0"
+version = "0.1.1"
 description = "The official CLI tool of Developer DAO Cloud."
 repository = "https://github.com/Developer-DAO/cloud-cli"
 edition = "2024"
@@ -11,14 +11,16 @@ arboard = "3.6.1"
 clap = { version = "4.5.53", features = ["derive"] }
 console = "0.15.11"
 dialoguer = { version = "0.11.0", features =["fuzzy-select"] }
-reqwest = {version = "0.12.15", features = ["json", "rustls-tls", "cookies"]}
+reqwest = { version = "0.13.1", features = ["json", "cookies"] }
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.140"
-tokio = {version = "1.48", features = ["rt-multi-thread", "macros"]}
-aws-config = { version = "1.1.7", features = ["behavior-version-latest", "credentials-login"] }
+tokio = {version = "1.48", features = ["rt-multi-thread", "macros"] }
+aws-config = { version = "1.8.12", features = ["behavior-version-latest", "credentials-login"] }
 aws-sdk-secretsmanager = "1.97.0"
+url = "2.5.8"
+cookie_store = {version = "0.22.1", features = ["serde_json"]}
+bytes = "1.11.1"
 
-# The profile that 'dist' will build with
 [profile.dist]
 inherits = "release"
 lto = "thin"
