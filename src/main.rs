@@ -17,6 +17,7 @@ use std::{
 
 pub mod commands;
 pub mod types;
+
 #[derive(Parser)]
 #[command(version, about = ABOUT, long_about = None, name = "dd-cloud", author)]
 pub struct CloudCli {
